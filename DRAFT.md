@@ -12,7 +12,7 @@ A JSON Mapping object is a JSON object or array in which keys (in the case of an
 
 ## Mapping Documents
 
-JSON Mappings can be expressed in JSON as objects or arrays. In JSON Mapping objects, keys are strings representing JSON Pointers and values can be either JSON Pointer strings or descriptive objects containing one or more properties representing specified keywords, "pointer", "type", "default", or "$ref". String and object values can be used in the same mapping.
+JSON Mappings can be expressed in JSON as objects or arrays. In JSON Mapping objects, keys are strings representing JSON Pointers and values can be either JSON Pointer strings or descriptive objects containing one or more properties representing specified keywords, "pointer", "type", "default", or "$ref". String and object values can be used in the same mapping. 
 
 	{
 		"/a": "/a/0",
@@ -37,9 +37,44 @@ In a mapping such that all keys-value pairs in the mapping have equality between
 
 	[ "/a", "/c/d", "/e/2" ]
 
+## Keywords
+
+Implementations MUST ignore members of the mapping that are not JSON Pointers or defined as valid property names in this document.
+
+### Property keywords
+
+$id
+$uri
+$schemas
+
+### Descriptor properties
+
+pointer
+
+	The `pointer` property MUST be present for any descriptor that does not contain the `$ref` property. It 
+	MUST NOT be present when the `$ref`. When present it MUST be a valid JSON Pointer string.
+
+type
+
+	The `type` property describes the expected type to be assigned. Implementations MUST attempt to coerce
+	types written to target objects according to JSON Schema Type Coercion Rules. When types cannot be coerced
+	the original value MUST be assigned to the target and error conditions SHOULD be ignored. Use of this property
+	is OPTIONAL.
+
+default
+
+	The `default` property specifies the value to be assigned to a target object in the event a corresponding value is 
+	not present in the source object at the JSON Pointer defined in the descriptor. Implementations MUST respect this 
+	property. In the event a `type` is defined in the same descriptor, default values MAY be of a different type. 
+	Implementations MUST NOT attempt to coerce types. Use of this property is OPTIONAL. 
+
+$ref
+
 ## Mapping Operations
 
 There are two primary operations that can be performed using a JSON Mapping: “map” and “project”. A third operation, "select", is a specialization of "map". Operations read from a source document and write to a target document, according to a mapping. The target can represent an empty object, an empty array, an object with existing properties, or an array with existing elements. In case the source and target object are equivalent, operations MUST leave existing properties intact while performing transformations described by the mapping. Operations MUST ignore error conditions that arise during JSON Pointer-based read and write operations.
+
+Keys in a mapping object that are not JSON Pointers MUST be ignored by operations over the mapping.
 
 ### Map
 
@@ -80,7 +115,7 @@ The map operation iterates over key-value pairs in a mapping and reads values fr
 
 ### Project
 
-The "project" operation reverse "map". It iterates over key-value pairs in a mapping and reads values from a source object using the “left side” of a mapping (its key) and assigns those values to a target object using the corresponding “right side” of the mapping (its value). 
+The "project" operation reverses "map". It iterates over key-value pairs in a mapping and reads values from a source object using the “left side” of a mapping (its key) and assigns those values to a target object using the corresponding “right side” of the mapping (its value). 
 
 #### Mapping
 	
@@ -151,8 +186,10 @@ A mapping is a “selection” if all of its key-value pairs have equal keys and
 
 ## Property Inclusion
 
+Default behavior for operations is to only write values to the source object from the target object which are explicitly specified by the mapping. This default behavior can be thought of as "selection" or "filtering".
+
 - filtering (default behavior)
-- allowing additional properties
+- allowing additional properties (like a "deep copy" with partial transformations)
 - difference between additional properties and mapping from source to itself as the target
 
 
@@ -201,6 +238,19 @@ Mappings can use Regular Expressions in a variety of ways.
 - string operators
 - string templates
 - date format transforms
+
+## Mapping metadata
+
+Additional non-mapping properties can be included in a mapping document.
+
+Any property name that is not a JSON Pointer is ignored.
+
+### Mapping Identifiers
+
+
+## Mapping Validation
+
+JSON Mappings implicitly represent a pair of schemas. Mappings should therefore hypothetically be validatable against a pair of JSON Schemas for the respective source and target objects.
 
 ## Security Considerations
 
